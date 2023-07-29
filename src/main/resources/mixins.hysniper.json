@@ -1,0 +1,10 @@
+{
+  "package": "io.github.shotoh.hysniper.mixins",
+  "refmap": "mixins.hysniper.refmap.json",
+  "minVersion": "0.7",
+  "compatibilityLevel": "JAVA_8",
+  "client": [
+    "MixinGuiContainer",
+    "LobbyHider"
+  ]
+}

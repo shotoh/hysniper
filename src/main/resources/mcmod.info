@@ -1,0 +1,18 @@
+[
+  {
+	"modid": "hysniper",
+	"name": "HySniper",
+	"description": "Private flipping mod for Hypixel",
+	"version": "3.0.0",
+	"mcversion": "1.8.9",
+	"url": "",
+	"updateUrl": "",
+	"authorList": [
+	  "shotoh"
+	],
+	"credits": "",
+	"logoFile": "",
+	"screenshots": [],
+	"dependencies": []
+  }
+]
