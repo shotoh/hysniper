@@ -51,7 +51,7 @@ public class HySniperCommand extends CommandBase {
             } else if (args[0].equalsIgnoreCase("dev")) {
                 mod.setDev(!mod.isDev());
                 UChat.chat("&5Developer Mode is now set to: &d" + mod.isDev());
-            } else if (args[0].equals("lowballing")) {
+            } else if (args[0].equals("price")) {
                 if (args.length > 1) {
                     try {
                         String message = mod.getClipboard().get(UUID.fromString(args[1]));

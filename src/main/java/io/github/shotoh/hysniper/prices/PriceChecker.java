@@ -1,8 +1,7 @@
-package io.github.shotoh.hysniper.lowball;
+package io.github.shotoh.hysniper.prices;
 
 import gg.essential.universal.wrappers.message.UTextComponent;
 import io.github.shotoh.hysniper.HySniper;
-import io.github.shotoh.hysniper.auctions.AuctionItem;
 import io.github.shotoh.hysniper.core.HySniperConfig;
 import io.github.shotoh.hysniper.utils.Utils;
 import net.minecraft.client.gui.inventory.GuiContainer;
@@ -17,19 +16,18 @@ import org.lwjgl.input.Keyboard;
 
 import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 import java.util.UUID;
 
-public class LowballChecker {
+public class PriceChecker {
     private final HySniper mod;
-    private final HashMap<String, LowballItem> prices;
+    private final HashMap<String, SkyblockItem> prices;
 
-    public LowballChecker(HySniper mod) {
+    public PriceChecker(HySniper mod) {
         this.mod = mod;
         this.prices = new HashMap<>();
     }
 
-    public HashMap<String, LowballItem> getPrices() {
+    public HashMap<String, SkyblockItem> getPrices() {
         return prices;
     }
 
@@ -46,9 +44,8 @@ public class LowballChecker {
     }
      */
 
-    public void check(NBTTagCompound tag) {
+    public PriceInfo checkPrice(NBTTagCompound tag) {
         long price = 0;
-        UUID uuid = UUID.randomUUID();
         StringBuilder builder = new StringBuilder();
         if (tag.hasKey("i")) {
             tag = tag.getTagList("i", 10).getCompoundTagAt(0).getCompoundTag("tag");
@@ -96,26 +93,27 @@ public class LowballChecker {
                 }
             }
         }
-        double tax = price * HySniperConfig.lowballingPricePercent;
-        price -= tax;
-        builder.append("Lowball Tax: -").append(Utils.formatPrice((long) tax)).append("\n");
-        builder.append("Total Price: ").append(Utils.formatPrice(price));
+        return new PriceInfo(price, builder);
+    }
+
+    public void sendPriceInfo(long price, StringBuilder builder) {
+        UUID uuid = UUID.randomUUID();
         mod.getClipboard().put(uuid, builder.toString());
         UTextComponent component = new UTextComponent("&5[&r&d&l!&r&5] &l" + Utils.formatPrice(price));
         component.setClickAction(ClickEvent.Action.RUN_COMMAND);
-        component.setClickValue("/hs lowballing " + uuid);
+        component.setClickValue("/hs price " + uuid);
         component.chat();
     }
 
     private double getPrice(StringBuilder builder, String id, int multiplier) {
-        LowballItem lowballItem = prices.get(id);
-        if (lowballItem != null) {
+        SkyblockItem skyblockItem = prices.get(id);
+        if (skyblockItem != null) {
             if (multiplier <= 0) {
                 return 0;
             }
-            builder.append(lowballItem.getName()).append(" (x").append(multiplier)
-                    .append("): +").append(Utils.formatPrice(lowballItem.getPrice() * multiplier)).append("\n");
-            return lowballItem.getPrice() * multiplier;
+            builder.append(skyblockItem.getName()).append(" (x").append(multiplier)
+                    .append("): +").append(Utils.formatPrice(skyblockItem.getPrice() * multiplier)).append("\n");
+            return skyblockItem.getPrice() * multiplier;
         } else {
             return 0;
         }
@@ -126,12 +124,19 @@ public class LowballChecker {
         if (!Utils.isInSkyblock()) {
             return;
         }
-        if (HySniperConfig.itemCheck && Keyboard.getEventKey() == Keyboard.KEY_BACKSLASH && Keyboard.getEventKeyState()) {
+        if (HySniperConfig.lowballing && Keyboard.getEventKey() == Keyboard.KEY_BACKSLASH && Keyboard.getEventKeyState()) {
             if (e.gui instanceof GuiContainer) {
                 GuiContainer gui = (GuiContainer) e.gui;
                 Slot slot = gui.getSlotUnderMouse();
                 if (slot != null && slot.getHasStack()) {
-                    check(slot.getStack().getTagCompound());
+                    PriceInfo priceInfo = checkPrice(slot.getStack().getTagCompound());
+                    long price = priceInfo.getPrice();
+                    StringBuilder builder = priceInfo.getBuilder();
+                    double tax = price * HySniperConfig.lowballingPricePercent;
+                    price -= tax;
+                    builder.append("Lowball Tax: -").append(Utils.formatPrice((long) tax)).append("\n");
+                    builder.append("Total Price: ").append(Utils.formatPrice(price));
+                    sendPriceInfo(price, builder);
                 }
             }
         }

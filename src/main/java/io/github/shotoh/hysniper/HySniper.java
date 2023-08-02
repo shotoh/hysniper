@@ -7,10 +7,9 @@ import io.github.shotoh.hysniper.commands.HySniperCommand;
 import io.github.shotoh.hysniper.core.HySniperConfig;
 import io.github.shotoh.hysniper.events.OnTickEvent;
 import io.github.shotoh.hysniper.features.qol.GhostBlocks;
-import io.github.shotoh.hysniper.lowball.LowballChecker;
+import io.github.shotoh.hysniper.prices.PriceChecker;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 
@@ -24,7 +23,7 @@ import java.util.concurrent.ScheduledExecutorService;
 public class HySniper {
     public static final String MODID = "hysniper";
     public static final String NAME = "HySniper";
-    public static final String VERSION = "1.0.0";
+    public static final String VERSION = "1.1.0";
 
     private final Gson gson;
     private final ScheduledExecutorService pool;
@@ -33,7 +32,7 @@ public class HySniper {
 
     private final AuctionChecker auctionChecker;
     private final BazaarChecker bazaarChecker;
-    private final LowballChecker lowballChecker;
+    private final PriceChecker priceChecker;
     private boolean dev;
 
     public HySniper() {
@@ -43,7 +42,7 @@ public class HySniper {
         this.clipboard = new HashMap<>();
         this.auctionChecker = new AuctionChecker(this);
         this.bazaarChecker = new BazaarChecker(this);
-        this.lowballChecker = new LowballChecker(this);
+        this.priceChecker = new PriceChecker(this);
         this.dev = false;
     }
 
@@ -53,7 +52,7 @@ public class HySniper {
         ClientCommandHandler.instance.registerCommand(new HySniperCommand(this));
         MinecraftForge.EVENT_BUS.register(new OnTickEvent());
         MinecraftForge.EVENT_BUS.register(new GhostBlocks());
-        MinecraftForge.EVENT_BUS.register(lowballChecker);
+        MinecraftForge.EVENT_BUS.register(priceChecker);
 
         // DataManager.load(this);
 
@@ -85,8 +84,8 @@ public class HySniper {
         return bazaarChecker;
     }
 
-    public LowballChecker getLowballChecker() {
-        return lowballChecker;
+    public PriceChecker getPriceChecker() {
+        return priceChecker;
     }
 
     public boolean isDev() {

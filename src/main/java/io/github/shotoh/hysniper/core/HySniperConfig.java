@@ -28,14 +28,6 @@ public class HySniperConfig extends Vigilant {
     public static boolean sounds = false;
     @Property(
             type = PropertyType.SWITCH,
-            name = "Item Check",
-            category = "General",
-            subcategory = "Features",
-            description = "Whether the item price should be calculated after clicking the backslash key"
-    )
-    public static boolean itemCheck = false;
-    @Property(
-            type = PropertyType.SWITCH,
             name = "Auction Stats",
             category = "General",
             subcategory = "Features",
@@ -58,7 +50,7 @@ public class HySniperConfig extends Vigilant {
             subcategory = "QOL",
             description = "Slot number for your pickaxe",
             min = -1,
-            max = 8
+            max = 7
     )
     public static int pickaxeSlot = -1;
     @Property(
@@ -68,7 +60,7 @@ public class HySniperConfig extends Vigilant {
             subcategory = "QOL",
             description = "Slot number for a random item to swap to",
             min = -1,
-            max = 8
+            max = 7
     )
     public static int randomSlot = -1;
     @Property(
@@ -80,26 +72,54 @@ public class HySniperConfig extends Vigilant {
     )
     public static boolean lobbyHider = false;
 
-    // Lowballing Category
+    // Price Category
     // Options Subcategory
     @Property(
-            type = PropertyType.PERCENT_SLIDER,
-            name = "Lowballing Percent Tax",
-            category = "Lowballing",
-            subcategory = "Options",
-            description = "The percent to take away from a lowball",
-            max = 1
-    )
-    public static float lowballingPricePercent = 0.1f;
-    @Property(
             type = PropertyType.SELECTOR,
-            name = "Lowballing Bazaar Algorithm",
-            category = "Lowballing",
+            name = "Bazaar Algorithm",
+            category = "Price",
             subcategory = "Options",
             description = "Determines the bazaar information by its instant-buy or instant-sell prices",
             options = {"Buy", "Sell"}
     )
-    public static int lowballingBazaarAlgorithm = 0;
+    public static int bazaarAlgorithm = 0;
+    // Lowballing Subcategory
+    @Property(
+            type = PropertyType.SWITCH,
+            name = "Lowballing",
+            category = "Price",
+            subcategory = "Lowballing",
+            description = "Whether the item price should be calculated after clicking the backslash key to assist in lowballing"
+    )
+    public static boolean lowballing = false;
+    @Property(
+            type = PropertyType.PERCENT_SLIDER,
+            name = "Lowballing Percent Tax",
+            category = "Price",
+            subcategory = "Lowballing",
+            description = "The percent to take away from a lowball",
+            max = 1
+    )
+    public static float lowballingPricePercent = 0.1f;
+    // Flipping Subcategory
+    @Property(
+            type = PropertyType.SWITCH,
+            name = "Flipping",
+            category = "Price",
+            subcategory = "Flipping",
+            description = "Whether the auction house should be randomly scanned for potential flips"
+    )
+    public static boolean flipping = false;
+    @Property(
+            type = PropertyType.NUMBER,
+            name = "Flipping Minimum Profit",
+            category = "Price",
+            subcategory = "Flipping",
+            description = "The minimum profit the auction should be to alert you",
+            max = 1000000000,
+            increment = 1000000
+    )
+    public static long flippingMinimumProfit = 1000000;
 
     public static HySniperConfig INSTANCE = new HySniperConfig();
 
