@@ -92,6 +92,16 @@ public class Utils {
         return val;
     }
 
+    public static String formatPercent(double value) {
+        String val = ((value - 1) * 100) + "";
+        if (val.contains(".")) {
+            if (val.substring(val.indexOf(".")).length() > 2) {
+                val = val.substring(0, val.indexOf(".") + 2);
+            }
+        }
+        return val + "%";
+    }
+
     public static String stripItemName(String name) {
         name = StringUtils.stripControlCodes(name);
         for (String reforge : reforges) {

@@ -28,7 +28,7 @@ import java.util.stream.IntStream;
 public class AuctionChecker {
     private final HySniper mod;
     private final CloseableHttpClient httpClient;
-    private final HashSet<AuctionItem> oldAuctions;
+    private final HashSet<String> oldAuctions;
     private final List<AuctionItem> currentAuctions;
     private HashMap<String, Double> lowestBins;
     private long oldUpdated;
@@ -44,7 +44,6 @@ public class AuctionChecker {
     public void checkAuctions() {
         if (Utils.isInSkyblock() && HySniperConfig.enabled) {
             long start = System.currentTimeMillis();
-            mod.getPool().schedule(this::checkAuctions, 60000 /* lastUpdated + 57000 - System.currentTimeMillis() */, TimeUnit.MILLISECONDS);
             mod.getBazaarChecker().checkBazaar(); // todo move to its own section
             UChat.chat("&7Updating Lowest Bins...");
             mod.getExecutor().execute(this::updateLowestBins);
@@ -56,6 +55,7 @@ public class AuctionChecker {
             }
             if (HySniperConfig.flipping) {
                 AtomicInteger scans = new AtomicInteger();
+                String[] whitelist = HySniperConfig.flippingWhitelist.split(", ");
                 try {
                     AuctionPage firstPage = getAuctionPage(0);
                     if (firstPage != null && firstPage.isSuccess()) {
@@ -79,8 +79,19 @@ public class AuctionChecker {
                                     e.printStackTrace();
                                     return new ArrayList<AuctionItem>();
                                 }
-                            }).flatMap(Collection::stream).filter(AuctionItem::isBin)
-                                    .filter(item -> !oldAuctions.contains(item)).forEach(currentAuctions::add);
+                            }).flatMap(Collection::stream).filter(AuctionItem::isBin).filter(item -> item.getStartingBid() <= HySniperConfig.flippingMaxPrice * 1000000L)
+                                    .filter(item -> item.getStartingBid() >= HySniperConfig.flippingMinPrice * 1000000L)
+                                    .filter(item -> !oldAuctions.contains(item.getUUID()))
+                                    .filter(item -> {
+                                        if (!whitelist[0].equals("NONE")) {
+                                            for (String whitelistName : whitelist) {
+                                                if (item.getItemName().contains(whitelistName)) {
+                                                    return true;
+                                                }
+                                            }
+                                        }
+                                        return false;
+                                    }).forEach(currentAuctions::add);
                             CompletableFuture.supplyAsync(() -> {
                                 while (!currentAuctions.isEmpty()) {
                                     int index = ThreadLocalRandom.current().nextInt(currentAuctions.size());
@@ -92,17 +103,19 @@ public class AuctionChecker {
                                         scans.getAndIncrement();
                                         PriceInfo priceInfo = mod.getPriceChecker().checkPrice(tag);
                                         long price = priceInfo.getPrice();
+                                        price -= price * HySniperConfig.flippingPricePercent;
                                         StringBuilder builder = priceInfo.getBuilder();
-                                        if (price - item.getStartingBid() >= HySniperConfig.flippingMinimumProfit) {
+                                        if (price - item.getStartingBid() >= HySniperConfig.flippingMinimumProfit * 1000000L) {
                                             builder.append("Total Price: ").append(Utils.formatPrice(price));
                                             flipAlert(item, price);
                                         }
                                     } catch (IOException e) {
                                         e.printStackTrace();
                                     }
-                                    oldAuctions.add(item);
+                                    oldAuctions.add(item.getUUID());
                                     currentAuctions.remove(item);
                                 }
+                                UChat.chat("&7Completed " + scans.get() + " auction scans!");
                                 return null;
                             }).get(45, TimeUnit.SECONDS);
                         } else {
@@ -115,8 +128,10 @@ public class AuctionChecker {
                 } catch (ExecutionException | InterruptedException e) {
                     e.printStackTrace();
                 } catch (TimeoutException e2) {
-                    UChat.chat("&7Completed " + scans.get() + " auction scans!");
+                    UChat.chat("&7Timed out.");
                 }
+            } else {
+                mod.getPool().schedule(this::checkAuctions, 60000 /* lastUpdated + 57000 - System.currentTimeMillis() */, TimeUnit.MILLISECONDS);
             }
 
 
@@ -191,6 +206,7 @@ public class AuctionChecker {
         }
     }
 
+    /*
     public void check(AuctionItem item) {
         if (oldAuctions.stream().map(AuctionItem::getUUID).noneMatch(item.getUUID()::equals)) {
             oldAuctions.add(item);
@@ -208,14 +224,14 @@ public class AuctionChecker {
                 e.printStackTrace();
                 UChat.chat("&cFailed to parse NBT data!");
             }
-             */
-        }
+}
     }
+     */
 
     public void flipAlert(AuctionItem item, long price) {
         UTextComponent component = new UTextComponent("&5[&r&d&l$&r&5] &l" + item.getItemName() +
                 "&r&d (" + Utils.formatPrice(item.getStartingBid()) + " -> " + Utils.formatPrice(price) + ") (" +
-                Utils.formatPrice(price - item.getStartingBid()) + ")");
+                Utils.formatPrice(price - item.getStartingBid()) + ") &e(+" + Utils.formatPercent((double) price / (item.getStartingBid())) + ")");
         component.setClickAction(ClickEvent.Action.RUN_COMMAND);
         component.setClickValue("/viewauction " + item.getUUID());
         component.chat();

@@ -115,11 +115,45 @@ public class HySniperConfig extends Vigilant {
             name = "Flipping Minimum Profit",
             category = "Price",
             subcategory = "Flipping",
-            description = "The minimum profit the auction should be to alert you",
-            max = 1000000000,
-            increment = 1000000
+            description = "The minimum profit the auction should be to alert you (in millions)",
+            max = 10000
     )
-    public static long flippingMinimumProfit = 1000000;
+    public static int flippingMinimumProfit = 1;
+    @Property(
+            type = PropertyType.PERCENT_SLIDER,
+            name = "Flipping Percent Tax",
+            category = "Price",
+            subcategory = "Flipping",
+            description = "The percent to take away from each auction",
+            max = 1
+    )
+    public static float flippingPricePercent = 0.1f;
+    @Property(
+            type = PropertyType.NUMBER,
+            name = "Flipping Minimum Price",
+            category = "Price",
+            subcategory = "Flipping",
+            description = "The minimum price the auction must be (in millions)",
+            max = 10000
+    )
+    public static int flippingMinPrice = 5;
+    @Property(
+            type = PropertyType.NUMBER,
+            name = "Flipping Maximum Price",
+            category = "Price",
+            subcategory = "Flipping",
+            description = "The maximum price the auction must be (in millions)",
+            max = 10000
+    )
+    public static int flippingMaxPrice = 100;
+    @Property(
+            type = PropertyType.PARAGRAPH,
+            name = "Flipping Whitelist",
+            category = "Price",
+            subcategory = "Flipping",
+            description = "Items the mod should target"
+    )
+    public static String flippingWhitelist = "NONE";
 
     public static HySniperConfig INSTANCE = new HySniperConfig();
 
