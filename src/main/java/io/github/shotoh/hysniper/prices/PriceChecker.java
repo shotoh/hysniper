@@ -1,11 +1,9 @@
 package io.github.shotoh.hysniper.prices;
 
-import gg.essential.universal.wrappers.message.UTextComponent;
 import io.github.shotoh.hysniper.HySniper;
 import io.github.shotoh.hysniper.core.HySniperConfig;
 import io.github.shotoh.hysniper.utils.Utils;
 import net.minecraft.client.gui.inventory.GuiContainer;
-import net.minecraft.event.ClickEvent;
 import net.minecraft.inventory.Slot;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -99,10 +97,7 @@ public class PriceChecker {
     public void sendPriceInfo(long price, StringBuilder builder) {
         UUID uuid = UUID.randomUUID();
         mod.getClipboard().put(uuid, builder.toString());
-        UTextComponent component = new UTextComponent("&5[&r&d&l!&r&5] &l" + Utils.formatPrice(price));
-        component.setClickAction(ClickEvent.Action.RUN_COMMAND);
-        component.setClickValue("/hs price " + uuid);
-        component.chat();
+        Utils.addCommandMessage("§5[§r§d§l!§r§5] §l" + Utils.formatPrice(price), "/hs price " + uuid);
     }
 
     private double getPrice(StringBuilder builder, String id, int multiplier) {
@@ -132,7 +127,7 @@ public class PriceChecker {
                     PriceInfo priceInfo = checkPrice(slot.getStack().getTagCompound());
                     long price = priceInfo.getPrice();
                     StringBuilder builder = priceInfo.getBuilder();
-                    double tax = price * HySniperConfig.lowballingPricePercent;
+                    double tax = price * HySniperConfig.lowballingPricePercent * 0.01;
                     price -= tax;
                     builder.append("Lowball Tax: -").append(Utils.formatPrice((long) tax)).append("\n");
                     builder.append("Total Price: ").append(Utils.formatPrice(price));

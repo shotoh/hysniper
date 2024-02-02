@@ -1,13 +1,14 @@
 package io.github.shotoh.hysniper.utils;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.event.ClickEvent;
 import net.minecraft.scoreboard.ScoreObjective;
 import net.minecraft.scoreboard.Scoreboard;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.ChatStyle;
+import net.minecraft.util.IChatComponent;
 import net.minecraft.util.StringUtils;
-
-import java.text.NumberFormat;
-import java.util.Locale;
 
 public class Utils {
     private static boolean inSkyblock = false;
@@ -24,6 +25,22 @@ public class Utils {
             "Fruitful", "Great", "Rugged", "Lush", "Lumberjack's", "Double-Bit", "Moil", "Toil", "Blessed", "Earthy", "Robust",
             "Zooming", "Pleasant", "Green Thumb", "Blessed", "Bountiful"
     };
+
+    public static void addMessage(String msg) {
+        EntityPlayerSP player = Minecraft.getMinecraft().thePlayer;
+        if (player == null) return;
+        player.addChatMessage(new ChatComponentText(msg));
+    }
+
+    public static void addCommandMessage(String msg, String command) {
+        EntityPlayerSP player = Minecraft.getMinecraft().thePlayer;
+        if (player == null) return;
+        IChatComponent component = new ChatComponentText(msg);
+        ChatStyle style = new ChatStyle();
+        style.setChatClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, command));
+        component.setChatStyle(style);
+        player.addChatMessage(component);
+    }
 
     public static boolean isInSkyblock() {
         return inSkyblock;

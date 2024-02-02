@@ -1,7 +1,5 @@
 package io.github.shotoh.hysniper.auctions;
 
-import com.google.gson.annotations.SerializedName;
-
 public class AuctionItem {
     private String uuid;
     private String item_name;

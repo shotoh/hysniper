@@ -1,13 +1,10 @@
 package io.github.shotoh.hysniper.auctions;
 
 import com.google.common.reflect.TypeToken;
-import gg.essential.universal.UChat;
-import gg.essential.universal.wrappers.message.UTextComponent;
 import io.github.shotoh.hysniper.HySniper;
 import io.github.shotoh.hysniper.core.HySniperConfig;
 import io.github.shotoh.hysniper.prices.PriceInfo;
 import io.github.shotoh.hysniper.utils.Utils;
-import net.minecraft.event.ClickEvent;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -42,20 +39,20 @@ public class AuctionChecker {
     }
 
     public void checkAuctions() {
-        if (Utils.isInSkyblock() && HySniperConfig.enabled) {
+        if (Utils.isInSkyblock() && HySniperConfig.modEnabled) {
             long start = System.currentTimeMillis();
             mod.getBazaarChecker().checkBazaar(); // todo move to its own section
-            UChat.chat("&7Updating Lowest Bins...");
+            Utils.addMessage("§7Updating Lowest Bins...");
             mod.getExecutor().execute(this::updateLowestBins);
             Utils.setSoundPlayed(false);
             if (HySniperConfig.auctionStats) {
                 long tts = System.currentTimeMillis() - start;
-                // UChat.chat("&5TTS avg:&r&d " + (tts / totalPages) + " ms");
-                UChat.chat("&5TTS all:&r&d " + Utils.formatTime(tts) + " seconds");
+                // Utils.sendMessage("§5TTS avg:§r§d " + (tts / totalPages) + " ms");
+                Utils.addMessage("§5TTS all:§r§d " + Utils.formatTime(tts) + " seconds");
             }
             if (HySniperConfig.flipping) {
                 AtomicInteger scans = new AtomicInteger();
-                String[] whitelist = HySniperConfig.flippingWhitelist.split(", ");
+                String[] blacklist = HySniperConfig.flippingBlacklist.split(", ");
                 try {
                     AuctionPage firstPage = getAuctionPage(0);
                     if (firstPage != null && firstPage.isSuccess()) {
@@ -64,7 +61,7 @@ public class AuctionChecker {
                         if (lastUpdated != oldUpdated) {
                             mod.getPool().schedule(this::checkAuctions, 60000, TimeUnit.MILLISECONDS);
                             oldUpdated = lastUpdated;
-                            UChat.chat("&7Scanning Auctions...");
+                            Utils.addMessage("§7Scanning Auctions...");
                             // creates futures between page 1 to total pages and collects them into a list
                             List<CompletableFuture<AuctionPage>> futures = IntStream.range(0, totalPages)
                                     .mapToObj(i -> CompletableFuture.supplyAsync(() -> getAuctionPage(i), mod.getExecutor()))
@@ -79,18 +76,18 @@ public class AuctionChecker {
                                     e.printStackTrace();
                                     return new ArrayList<AuctionItem>();
                                 }
-                            }).flatMap(Collection::stream).filter(AuctionItem::isBin).filter(item -> item.getStartingBid() <= HySniperConfig.flippingMaxPrice * 1000000L)
+                            }).flatMap(Collection::stream).filter(AuctionItem::isBin)
+                                    .filter(item -> item.getStartingBid() <= HySniperConfig.flippingMaxPrice * 1000000L)
                                     .filter(item -> item.getStartingBid() >= HySniperConfig.flippingMinPrice * 1000000L)
                                     .filter(item -> !oldAuctions.contains(item.getUUID()))
                                     .filter(item -> {
-                                        if (!whitelist[0].equals("NONE")) {
-                                            for (String whitelistName : whitelist) {
-                                                if (item.getItemName().contains(whitelistName)) {
-                                                    return true;
-                                                }
+                                        if (HySniperConfig.flippingBlacklist.contains("NONE")) return true;
+                                        for (String blacklistName : blacklist) {
+                                            if (item.getItemName().contains(blacklistName)) {
+                                                return false;
                                             }
                                         }
-                                        return false;
+                                        return true;
                                     }).forEach(currentAuctions::add);
                             CompletableFuture.supplyAsync(() -> {
                                 while (!currentAuctions.isEmpty()) {
@@ -103,7 +100,7 @@ public class AuctionChecker {
                                         scans.getAndIncrement();
                                         PriceInfo priceInfo = mod.getPriceChecker().checkPrice(tag);
                                         long price = priceInfo.getPrice();
-                                        price -= price * HySniperConfig.flippingPricePercent;
+                                        price -= price * HySniperConfig.flippingPricePercent * 0.01;
                                         StringBuilder builder = priceInfo.getBuilder();
                                         if (price - item.getStartingBid() >= HySniperConfig.flippingMinimumProfit * 1000000L) {
                                             builder.append("Total Price: ").append(Utils.formatPrice(price));
@@ -115,7 +112,7 @@ public class AuctionChecker {
                                     oldAuctions.add(item.getUUID());
                                     currentAuctions.remove(item);
                                 }
-                                UChat.chat("&7Completed " + scans.get() + " auction scans!");
+                                Utils.addMessage("§7Completed " + scans.get() + " auction scans!");
                                 return null;
                             }).get(45, TimeUnit.SECONDS);
                         } else {
@@ -123,12 +120,12 @@ public class AuctionChecker {
                         }
                     } else {
                         mod.getPool().schedule(this::checkAuctions, 57, TimeUnit.SECONDS);
-                        UChat.chat("&cFailed to fetch auctions");
+                        Utils.addMessage("§cFailed to fetch auctions");
                     }
                 } catch (ExecutionException | InterruptedException e) {
                     e.printStackTrace();
                 } catch (TimeoutException e2) {
-                    UChat.chat("&7Timed out.");
+                    Utils.addMessage("§7Timed out.");
                 }
             } else {
                 mod.getPool().schedule(this::checkAuctions, 60000 /* lastUpdated + 57000 - System.currentTimeMillis() */, TimeUnit.MILLISECONDS);
@@ -144,9 +141,9 @@ public class AuctionChecker {
                     if (lastUpdated != oldUpdated) {
                         mod.getPool().schedule(this::checkAuctions, 60000 /* lastUpdated + 57000 - System.currentTimeMillis() , TimeUnit.MILLISECONDS);
                     oldUpdated = lastUpdated;
-                    // UChat.chat("&7Scanning Auctions...");
+                    // Utils.sendMessage("§7Scanning Auctions...");
                     mod.getBazaarChecker().checkBazaar(); // todo move to its own section
-                    UChat.chat("&7Updating Lowest Bins...");
+                    Utils.sendMessage("§7Updating Lowest Bins...");
                     mod.getExecutor().execute(this::updateLowestBins);
                     // creates futures between page 1 to total pages and collects them into a list
                     List<CompletableFuture<AuctionPage>> futures = IntStream.range(0, totalPages)
@@ -167,15 +164,15 @@ public class AuctionChecker {
                     Utils.setSoundPlayed(false);
                     if (HySniperConfig.auctionStats) {
                         long tts = System.currentTimeMillis() - start;
-                        UChat.chat("&5TTS avg:&r&d " + (tts / totalPages) + " ms");
-                        UChat.chat("&5TTS all:&r&d " + Utils.formatTime(tts) + " seconds");
+                        Utils.sendMessage("§5TTS avg:§r§d " + (tts / totalPages) + " ms");
+                        Utils.sendMessage("§5TTS all:§r§d " + Utils.formatTime(tts) + " seconds");
                     }
                 } else {
                     mod.getPool().schedule(this::checkAuctions, 500, TimeUnit.MILLISECONDS);
                 }
             } else {
                 mod.getPool().schedule(this::checkAuctions, 57, TimeUnit.SECONDS);
-                UChat.chat("&cFailed to fetch auctions");
+                Utils.sendMessage("§cFailed to fetch auctions");
             }
         }
              */
@@ -185,7 +182,7 @@ public class AuctionChecker {
     }
 
     public AuctionPage getAuctionPage(int page) {
-        HttpGet httpGet = new HttpGet("https://api.hypixel.net/skyblock/auctions?page=" + page);
+        HttpGet httpGet = new HttpGet("https://api.hypixel.net/v2/skyblock/auctions?page=" + page);
         httpGet.addHeader("content-type", "application/json; charset=UTF-8");
         try (CloseableHttpResponse httpResponse = httpClient.execute(httpGet)) {
             return mod.getGson().fromJson(new InputStreamReader(httpResponse.getEntity().getContent(), StandardCharsets.UTF_8), AuctionPage.class);
@@ -222,19 +219,17 @@ public class AuctionChecker {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-                UChat.chat("&cFailed to parse NBT data!");
+                Utils.sendMessage("§cFailed to parse NBT data!");
             }
 }
     }
      */
 
     public void flipAlert(AuctionItem item, long price) {
-        UTextComponent component = new UTextComponent("&5[&r&d&l$&r&5] &l" + item.getItemName() +
-                "&r&d (" + Utils.formatPrice(item.getStartingBid()) + " -> " + Utils.formatPrice(price) + ") (" +
-                Utils.formatPrice(price - item.getStartingBid()) + ") &e(+" + Utils.formatPercent((double) price / (item.getStartingBid())) + ")");
-        component.setClickAction(ClickEvent.Action.RUN_COMMAND);
-        component.setClickValue("/viewauction " + item.getUUID());
-        component.chat();
+        Utils.addCommandMessage("§5[§r§d§l$§r§5] §l" + item.getItemName() +
+                "§r§d (" + Utils.formatPrice(item.getStartingBid()) + " -> " + Utils.formatPrice(price) + ") (" +
+                Utils.formatPrice(price - item.getStartingBid()) + ") §e(+" + Utils.formatPercent((double) price / (item.getStartingBid())) + ")",
+                "/viewauction " + item.getUUID());
         if (HySniperConfig.sounds && !Utils.isSoundPlayed()) {
             Utils.setSoundPlayed(true);
             Utils.playSound("note.pling", 1, 0.5f);

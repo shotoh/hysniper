@@ -1,72 +1,62 @@
 package io.github.shotoh.hysniper.core;
 
-import gg.essential.vigilance.Vigilant;
-import gg.essential.vigilance.data.*;
-import org.jetbrains.annotations.NotNull;
+import cc.polyfrost.oneconfig.config.Config;
+import cc.polyfrost.oneconfig.config.annotations.Number;
+import cc.polyfrost.oneconfig.config.annotations.*;
+import cc.polyfrost.oneconfig.config.data.Mod;
+import cc.polyfrost.oneconfig.config.data.ModType;
 
-import java.io.File;
-import java.util.Comparator;
+public class HySniperConfig extends Config {
+    public HySniperConfig() {
+        super(new Mod("hysniper", ModType.SKYBLOCK), "hysniperconfig.json");
+        initialize();
+    }
 
-public class HySniperConfig extends Vigilant {
     // General Category
     // Features Subcategory
-    @Property(
-            type = PropertyType.SWITCH,
+    @Switch(
             name = "Enabled",
-            category = "General",
             subcategory = "Features",
             description = "If the mod's features should be enabled"
     )
-    public static boolean enabled = false;
-    @Property(
-            type = PropertyType.SWITCH,
+    public static boolean modEnabled = false;
+    @Switch(
             name = "Sounds",
-            category = "General",
             subcategory = "Features",
             description = "Creates a sound when a flip has been found"
     )
     public static boolean sounds = false;
-    @Property(
-            type = PropertyType.SWITCH,
+    @Switch(
             name = "Auction Stats",
-            category = "General",
             subcategory = "Features",
             description = "Whether statistics such as TTS should be shown after a scan"
     )
     public static boolean auctionStats = false;
     // QOL Subcategory
-    @Property(
-            type = PropertyType.SWITCH,
+    @Switch(
             name = "Ghost Blocks",
-            category = "General",
             subcategory = "QOL",
             description = "Creates ghost blocks using your pickaxe"
     )
     public static boolean ghostBlocks = false;
-    @Property(
-            type = PropertyType.NUMBER,
+    @Number(
             name = "Pickaxe Slot",
-            category = "General",
             subcategory = "QOL",
             description = "Slot number for your pickaxe",
             min = -1,
             max = 7
     )
     public static int pickaxeSlot = -1;
-    @Property(
-            type = PropertyType.NUMBER,
+    @Number(
             name = "Random Slot",
-            category = "General",
             subcategory = "QOL",
             description = "Slot number for a random item to swap to",
             min = -1,
             max = 7
     )
     public static int randomSlot = -1;
-    @Property(
-            type = PropertyType.SWITCH,
+    @Switch(
             name = "Lobby Hider",
-            category = "General",
             subcategory = "QOL",
             description = "Hides your current lobby"
     )
@@ -74,8 +64,7 @@ public class HySniperConfig extends Vigilant {
 
     // Price Category
     // Options Subcategory
-    @Property(
-            type = PropertyType.SELECTOR,
+    @Dropdown(
             name = "Bazaar Algorithm",
             category = "Price",
             subcategory = "Options",
@@ -84,96 +73,72 @@ public class HySniperConfig extends Vigilant {
     )
     public static int bazaarAlgorithm = 0;
     // Lowballing Subcategory
-    @Property(
-            type = PropertyType.SWITCH,
+    @Switch(
             name = "Lowballing",
             category = "Price",
             subcategory = "Lowballing",
             description = "Whether the item price should be calculated after clicking the backslash key to assist in lowballing"
     )
     public static boolean lowballing = false;
-    @Property(
-            type = PropertyType.PERCENT_SLIDER,
+    @Slider(
             name = "Lowballing Percent Tax",
             category = "Price",
             subcategory = "Lowballing",
             description = "The percent to take away from a lowball",
-            max = 1
+            min = 0f,
+            max = 100f
     )
-    public static float lowballingPricePercent = 0.1f;
+    public static float lowballingPricePercent = 10f;
     // Flipping Subcategory
-    @Property(
-            type = PropertyType.SWITCH,
+    @Switch(
             name = "Flipping",
             category = "Price",
             subcategory = "Flipping",
             description = "Whether the auction house should be randomly scanned for potential flips"
     )
     public static boolean flipping = false;
-    @Property(
-            type = PropertyType.NUMBER,
+    @Number(
             name = "Flipping Minimum Profit",
             category = "Price",
             subcategory = "Flipping",
             description = "The minimum profit the auction should be to alert you (in millions)",
+            min = 0,
             max = 10000
     )
     public static int flippingMinimumProfit = 1;
-    @Property(
-            type = PropertyType.PERCENT_SLIDER,
+    @Slider(
             name = "Flipping Percent Tax",
             category = "Price",
             subcategory = "Flipping",
             description = "The percent to take away from each auction",
-            max = 1
+            min = 0f,
+            max = 100f
     )
-    public static float flippingPricePercent = 0.1f;
-    @Property(
-            type = PropertyType.NUMBER,
+    public static float flippingPricePercent = 10f;
+    @Number(
             name = "Flipping Minimum Price",
             category = "Price",
             subcategory = "Flipping",
             description = "The minimum price the auction must be (in millions)",
+            min = 0,
             max = 10000
     )
     public static int flippingMinPrice = 5;
-    @Property(
-            type = PropertyType.NUMBER,
+    @Number(
             name = "Flipping Maximum Price",
             category = "Price",
             subcategory = "Flipping",
             description = "The maximum price the auction must be (in millions)",
+            min = 1,
             max = 10000
     )
     public static int flippingMaxPrice = 100;
-    @Property(
-            type = PropertyType.PARAGRAPH,
-            name = "Flipping Whitelist",
+    @Text(
+            name = "Flipping Blacklist",
             category = "Price",
             subcategory = "Flipping",
-            description = "Items the mod should target"
+            placeholder = "NONE",
+            description = "Items the mod should forget"
     )
-    public static String flippingWhitelist = "NONE";
-
-    public static HySniperConfig INSTANCE = new HySniperConfig();
-
-    private HySniperConfig() {
-        super(new File("./config/hysniper.toml"), "HySniper", new JVMAnnotationPropertyCollector(),
-                new SortingBehavior() {
-                    @NotNull
-                    @Override
-                    public Comparator<? super Category> getCategoryComparator() {
-                        return (Comparator<Category>) (o1, o2) -> {
-                            if (o1.getName().equals("General")) {
-                                return -1;
-                            } else if (o2.getName().equals("General")) {
-                                return 1;
-                            } else {
-                                return o1.getName().compareTo(o2.getName());
-                            }
-                        };
-                    }
-                });
-        initialize();
-    }
+    public static String flippingBlacklist = "NONE";
 }

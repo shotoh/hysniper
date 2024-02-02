@@ -1,9 +1,9 @@
 package io.github.shotoh.hysniper.bazaar;
 
-import gg.essential.universal.UChat;
 import io.github.shotoh.hysniper.HySniper;
 import io.github.shotoh.hysniper.core.HySniperConfig;
 import io.github.shotoh.hysniper.prices.SkyblockItem;
+import io.github.shotoh.hysniper.utils.Utils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -23,7 +23,7 @@ public class BazaarChecker {
 
     public void checkBazaar() {
         try {
-            UChat.chat("&7Scanning Bazaar...");
+            Utils.addMessage("§7Scanning Bazaar...");
             CompletableFuture<BazaarPage> future = CompletableFuture.supplyAsync(this::getBazaarPage, mod.getExecutor());
             BazaarPage page = future.get();
             if (page.isSuccess()) {
@@ -80,7 +80,7 @@ public class BazaarChecker {
                 addPrice(page, "JADERALD", "Jaded Reforge", 1.0);
                 addPrice(page, "OVERGROWN_GRASS", "Mossy Reforge", 1.0);
             } else {
-                UChat.chat("&cFailed to fetch bazaar");
+                Utils.addMessage("§cFailed to fetch bazaar");
             }
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
@@ -89,7 +89,7 @@ public class BazaarChecker {
 
     public BazaarPage getBazaarPage() {
         CloseableHttpClient httpClient = HttpClientBuilder.create().build();
-        HttpGet httpGet = new HttpGet("https://api.hypixel.net/skyblock/bazaar");
+        HttpGet httpGet = new HttpGet("https://api.hypixel.net/v2/skyblock/bazaar");
         httpGet.addHeader("content-type", "application/json; charset=UTF-8");
         try (CloseableHttpResponse httpResponse = httpClient.execute(httpGet)) {
             return mod.getGson().fromJson(new InputStreamReader(httpResponse.getEntity().getContent(), StandardCharsets.UTF_8), BazaarPage.class);

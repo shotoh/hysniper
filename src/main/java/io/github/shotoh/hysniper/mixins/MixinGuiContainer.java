@@ -1,6 +1,5 @@
 package io.github.shotoh.hysniper.mixins;
 
-import gg.essential.universal.UChat;
 import io.github.shotoh.hysniper.events.MouseClickEvent;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.inventory.Slot;
