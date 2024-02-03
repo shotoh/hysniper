@@ -17,8 +17,6 @@ public class MixinGuiContainer {
         GuiContainer gui = (GuiContainer) (Object) this;
         MouseClickEvent event = new MouseClickEvent(gui, slotIn, slotId, clickedButton, clickType);
         MinecraftForge.EVENT_BUS.post(event);
-        if (event.isCanceled()) {
-            ci.cancel();
-        }
+        if (event.isCanceled()) ci.cancel();
     }
 }

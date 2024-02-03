@@ -1,8 +1,8 @@
 package io.github.shotoh.hysniper.prices;
 
 public class PriceInfo {
-    private long price;
-    private StringBuilder builder;
+    private final long price;
+    private final StringBuilder builder;
 
     public PriceInfo(long price, StringBuilder builder) {
         this.price = price;
@@ -13,15 +13,7 @@ public class PriceInfo {
         return price;
     }
 
-    public void setPrice(long price) {
-        this.price = price;
-    }
-
     public StringBuilder getBuilder() {
         return builder;
-    }
-
-    public void setBuilder(StringBuilder builder) {
-        this.builder = builder;
     }
 }

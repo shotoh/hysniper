@@ -8,23 +8,9 @@ import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.util.IChatComponent;
-import net.minecraft.util.StringUtils;
 
 public class Utils {
-    private static boolean inSkyblock = false;
-    private static boolean soundPlayed = false;
-    private static String[] reforges = new String[] {
-            "Epic", "Fair", "Fast", "Gentle", "Heroic", "Legendary", "Odd", "Sharp", "Spicy", "Coldfused", "Dirty", "Fabled",
-            "Gilded", "Suspicious", "Warped", "Withered", "Bulky", "Jerry's", "Awkward", "Deadly", "Fine", "Grand", "Hasty",
-            "Neat", "Rapid", "Rich", "Unreal", "Precise", "Spiritual", "Headstrong", "Clean", "Fierce", "Heavy", "Light",
-            "Mythic", "Pure", "Titanic", "Smart", "Wise", "Candied", "Submerged", "Perfect", "Reinforced", "Renowned",
-            "Spiked", "Hyper", "Giant", "Jaded", "Cubic", "Necrotic", "Empowered", "Ancient", "Undead", "Loving", "Ridiculous",
-            "Bustling", "Mossy", "Festive", "Glistening", "Strengthened", "Waxed", "Fortified", "Rooted", "Blooming", "Snowy",
-            "Salty", "Treacherous", "Lucky", "Stiff", "Dirty", "Chomp", "Pitchin'", "Unyielding", "Prospector's", "Excellent",
-            "Sturdy", "Fortunate", "Ambered", "Auspicious", "Fleet", "Heated", "Magnetic", "Mithraic", "Refined", "Stellar",
-            "Fruitful", "Great", "Rugged", "Lush", "Lumberjack's", "Double-Bit", "Moil", "Toil", "Blessed", "Earthy", "Robust",
-            "Zooming", "Pleasant", "Green Thumb", "Blessed", "Bountiful"
-    };
+    public static boolean inSkyblock = false;
 
     public static void addMessage(String msg) {
         EntityPlayerSP player = Minecraft.getMinecraft().thePlayer;
@@ -42,16 +28,10 @@ public class Utils {
         player.addChatMessage(component);
     }
 
-    public static boolean isInSkyblock() {
-        return inSkyblock;
-    }
-
-    public static boolean isSoundPlayed() {
-        return soundPlayed;
-    }
-
-    public static void setSoundPlayed(boolean soundPlayed) {
-        Utils.soundPlayed = soundPlayed;
+    public static void playSound(String sound, float volume, float pitch) {
+        EntityPlayerSP player = Minecraft.getMinecraft().thePlayer;
+        if (player == null) return;
+        player.playSound(sound, volume, pitch);
     }
 
     public static void update() {
@@ -74,10 +54,6 @@ public class Utils {
             }
             inSkyblock = false;
         }
-    }
-
-    public static void playSound(String sound, float volume, float pitch) {
-        Minecraft.getMinecraft().thePlayer.playSound(sound, volume, pitch);
     }
 
     public static String formatPrice(long price) {
@@ -107,30 +83,5 @@ public class Utils {
             }
         }
         return val;
-    }
-
-    public static String formatPercent(double value) {
-        String val = ((value - 1) * 100) + "";
-        if (val.contains(".")) {
-            if (val.substring(val.indexOf(".")).length() > 2) {
-                val = val.substring(0, val.indexOf(".") + 2);
-            }
-        }
-        return val + "%";
-    }
-
-    public static String stripItemName(String name) {
-        name = StringUtils.stripControlCodes(name);
-        for (String reforge : reforges) {
-            name = name.replace(reforge + " ", "");
-        }
-        name = name.replace(" ✪", "");
-        name = name.replace("✪", "");
-        name = name.replace("➊", "");
-        name = name.replace("➋", "");
-        name = name.replace("➌", "");
-        name = name.replace("➍", "");
-        name = name.replace("➎", "");
-        return name;
     }
 }

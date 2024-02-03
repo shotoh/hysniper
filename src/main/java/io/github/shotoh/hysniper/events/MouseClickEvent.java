@@ -20,9 +20,4 @@ public class MouseClickEvent extends Event {
         this.clickedButton = clickedButton;
         this.clickType = clickType;
     }
-
-    @Override
-    public void setCanceled(boolean cancel) {
-        super.setCanceled(cancel);
-    }
 }

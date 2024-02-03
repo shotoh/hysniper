@@ -1,4 +1,4 @@
-package io.github.shotoh.hysniper.features.qol;
+package io.github.shotoh.hysniper.features;
 
 import io.github.shotoh.hysniper.core.HySniperConfig;
 import io.github.shotoh.hysniper.events.MouseClickEvent;
@@ -31,9 +31,7 @@ public class GhostBlocks {
 
     @SubscribeEvent
     public void onMouseClickEvent(MouseClickEvent event) {
-        if (!Utils.isInSkyblock() || !HySniperConfig.ghostBlocks) {
-            return;
-        }
+        if (!Utils.inSkyblock || !HySniperConfig.ghostBlocks) return;
         Minecraft mc = Minecraft.getMinecraft();
         int pickaxe = HySniperConfig.pickaxeSlot;
         int random = HySniperConfig.randomSlot;

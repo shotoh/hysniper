@@ -1,6 +1,8 @@
 package io.github.shotoh.hysniper.prices;
 
 import io.github.shotoh.hysniper.HySniper;
+import io.github.shotoh.hysniper.auctions.AuctionChecker;
+import io.github.shotoh.hysniper.bazaar.BazaarChecker;
 import io.github.shotoh.hysniper.core.HySniperConfig;
 import io.github.shotoh.hysniper.utils.Utils;
 import net.minecraft.client.gui.inventory.GuiContainer;
@@ -14,47 +16,38 @@ import org.lwjgl.input.Keyboard;
 
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class PriceChecker {
-    private final HySniper mod;
-    private final HashMap<String, SkyblockItem> prices;
+    public static final Map<String, Double> AUCTION_PRICES = new HashMap<>();
+    public static final Map<String, SkyblockItem> BAZAAR_PRICES = new HashMap<>();
 
-    public PriceChecker(HySniper mod) {
-        this.mod = mod;
-        this.prices = new HashMap<>();
-    }
-
-    public HashMap<String, SkyblockItem> getPrices() {
-        return prices;
-    }
-
-    /*
-    public void addLowestBin(AuctionItem item) {
-        String name = Utils.stripItemName(item.getItemName());
-        if (name.equals("Armor")) {
-            return;
+    public static void scanPrices() {
+        if (Utils.inSkyblock & HySniperConfig.scanning) {
+            long start = System.currentTimeMillis();
+            AuctionChecker.checkAuctions();
+            BazaarChecker.checkBazaar();
+            if (HySniperConfig.statistics) {
+                long tts = System.currentTimeMillis() - start;
+                Utils.addMessage("§5TTS all:§r§d " + Utils.formatTime(tts) + " seconds");
+            }
         }
-        long lowestPrice = lowestBin.getOrDefault(name, 0L);
-        if (item.getStartingBid() <= lowestPrice || lowestPrice == 0) {
-            lowestBin.put(name, item.getStartingBid());
-        }
+        HySniper.POOL.schedule(PriceChecker::scanPrices, 60, TimeUnit.SECONDS);
     }
-     */
 
-    public PriceInfo checkPrice(NBTTagCompound tag) {
+    public static PriceInfo checkPrice(NBTTagCompound tag) {
         long price = 0;
         StringBuilder builder = new StringBuilder();
-        if (tag.hasKey("i")) {
-            tag = tag.getTagList("i", 10).getCompoundTagAt(0).getCompoundTag("tag");
-        }
+        if (tag.hasKey("i")) tag = tag.getTagList("i", 10).getCompoundTagAt(0).getCompoundTag("tag");
         if (tag.hasKey("display") && tag.hasKey("ExtraAttributes")) {
             NBTTagCompound display = tag.getCompoundTag("display");
             NBTTagCompound ea = tag.getCompoundTag("ExtraAttributes");
             String name = display.getString("Name");
             builder.append("Lowballing ").append(StringUtils.stripControlCodes(name)).append("\n");
             String id = ea.getString("id");
-            price += mod.getAuctionChecker().getLowestBins().getOrDefault(id, 0.0).longValue();
+            price += AUCTION_PRICES.getOrDefault(id, 0.0).longValue();
             builder.append("Base Price: ").append(Utils.formatPrice(price)).append("\n");
             price += getPrice(builder, "RECOMBOBULATOR_3000", ea.getInteger("rarity_upgrades"));
             price += getPrice(builder, "HOT_POTATO_BOOK", Math.min(ea.getInteger("hot_potato_count"), 10));
@@ -94,46 +87,36 @@ public class PriceChecker {
         return new PriceInfo(price, builder);
     }
 
-    public void sendPriceInfo(long price, StringBuilder builder) {
+    private static void sendPriceInfo(long price, StringBuilder builder) {
         UUID uuid = UUID.randomUUID();
-        mod.getClipboard().put(uuid, builder.toString());
+        HySniper.CLIPBOARD.put(uuid, builder.toString());
         Utils.addCommandMessage("§5[§r§d§l!§r§5] §l" + Utils.formatPrice(price), "/hs price " + uuid);
     }
 
-    private double getPrice(StringBuilder builder, String id, int multiplier) {
-        SkyblockItem skyblockItem = prices.get(id);
-        if (skyblockItem != null) {
-            if (multiplier <= 0) {
-                return 0;
-            }
-            builder.append(skyblockItem.getName()).append(" (x").append(multiplier)
-                    .append("): +").append(Utils.formatPrice(skyblockItem.getPrice() * multiplier)).append("\n");
-            return skyblockItem.getPrice() * multiplier;
-        } else {
-            return 0;
-        }
+    private static long getPrice(StringBuilder builder, String id, int multiplier) {
+        SkyblockItem skyblockItem = BAZAAR_PRICES.get(id);
+        if (skyblockItem == null) return 0;
+        if (multiplier <= 0) return 0;
+        builder.append(skyblockItem.getName()).append(" (x").append(multiplier)
+                .append("): +").append(Utils.formatPrice(skyblockItem.getPrice() * multiplier)).append("\n");
+        return skyblockItem.getPrice() * multiplier;
     }
 
     @SubscribeEvent
-    public void onKeyboardInputPre(GuiScreenEvent.KeyboardInputEvent.Pre e) {
-        if (!Utils.isInSkyblock()) {
-            return;
-        }
-        if (HySniperConfig.lowballing && Keyboard.getEventKey() == Keyboard.KEY_BACKSLASH && Keyboard.getEventKeyState()) {
-            if (e.gui instanceof GuiContainer) {
-                GuiContainer gui = (GuiContainer) e.gui;
-                Slot slot = gui.getSlotUnderMouse();
-                if (slot != null && slot.getHasStack()) {
-                    PriceInfo priceInfo = checkPrice(slot.getStack().getTagCompound());
-                    long price = priceInfo.getPrice();
-                    StringBuilder builder = priceInfo.getBuilder();
-                    double tax = price * HySniperConfig.lowballingPricePercent * 0.01;
-                    price -= tax;
-                    builder.append("Lowball Tax: -").append(Utils.formatPrice((long) tax)).append("\n");
-                    builder.append("Total Price: ").append(Utils.formatPrice(price));
-                    sendPriceInfo(price, builder);
-                }
-            }
-        }
+    public void onKeyboardInputEvent(GuiScreenEvent.KeyboardInputEvent.Pre e) {
+        if (!Utils.inSkyblock) return;
+        if (!HySniperConfig.lowballing || Keyboard.getEventKey() != Keyboard.KEY_BACKSLASH || !Keyboard.getEventKeyState()) return;
+        if (!(e.gui instanceof GuiContainer)) return;
+        GuiContainer gui = (GuiContainer) e.gui;
+        Slot slot = gui.getSlotUnderMouse();
+        if (slot == null || !slot.getHasStack()) return;
+        PriceInfo priceInfo = checkPrice(slot.getStack().getTagCompound());
+        long price = priceInfo.getPrice();
+        StringBuilder builder = priceInfo.getBuilder();
+        long tax = (long) (price * HySniperConfig.lowballingTax * 0.01);
+        price -= tax;
+        builder.append("Lowball Tax: -").append(Utils.formatPrice(tax)).append("\n");
+        builder.append("Total Price: ").append(Utils.formatPrice(price));
+        sendPriceInfo(price, builder);
     }
 }

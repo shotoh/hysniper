@@ -1,49 +1,37 @@
 package io.github.shotoh.hysniper.auctions;
 
 public class AuctionItem {
-    private String uuid;
-    private String item_name;
-    private long starting_bid;
-    private String item_bytes;
-    private boolean bin;
+    private final String uuid;
+    private final String item_name;
+    private final long starting_bid;
+    private final String item_bytes;
+    private final boolean bin;
+
+    public AuctionItem(String uuid, String item_name, long starting_bid, String item_bytes, boolean bin) {
+        this.uuid = uuid;
+        this.item_name = item_name;
+        this.starting_bid = starting_bid;
+        this.item_bytes = item_bytes;
+        this.bin = bin;
+    }
 
     public String getUUID() {
         return uuid;
-    }
-
-    public void setUUID(String uuid) {
-        this.uuid = uuid;
     }
 
     public String getItemName() {
         return item_name;
     }
 
-    public void setItemName(String itemName) {
-        this.item_name = itemName;
-    }
-
     public long getStartingBid() {
         return starting_bid;
-    }
-
-    public void setStartingBid(long startingBid) {
-        this.starting_bid = startingBid;
     }
 
     public String getItemBytes() {
         return item_bytes;
     }
 
-    public void setItemBytes(String itemBytes) {
-        this.item_bytes = itemBytes;
-    }
-
     public boolean isBin() {
         return bin;
-    }
-
-    public void setBin(boolean bin) {
-        this.bin = bin;
     }
 }
